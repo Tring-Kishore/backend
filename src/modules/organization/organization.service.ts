@@ -1,5 +1,5 @@
 import { Organization } from "./entity/organization.entity";
-import { User } from "../user/entity/user.entity";
+import { User, UserRole } from "../user/entity/user.entity";
 import { OrganizationInput } from "./input";
 import { UserInput } from "../user/input";
 import { v4 as uuidv4 } from "uuid";
@@ -42,7 +42,7 @@ export class OrganizationService {
       user.email = normalizedEmail;
       user.phone = phone;
       user.password = hashedPassword;
-      user.role = 'organization';
+      user.role = UserRole.ORGANIZATION;
       
       const savedUser = await this.userRepository.save(user);
 
