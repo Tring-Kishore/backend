@@ -49,7 +49,7 @@ export class OrganizationService {
       // Create organization
       const organization = new Organization();
       organization.id = orgId;
-      organization.user = savedUser.id;
+      organization.user = { id: userId } as User;
       organization.website = website;
       organization.description = description;
       organization.status = status;
