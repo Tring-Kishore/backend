@@ -5,12 +5,6 @@ import { Organization } from "../../organization/entity/organization.entity";
 import { JobPost } from "../../jobs/entity/jobPost.entity";
 import { JobApplied } from "../../jobs/entity/jobApplied.entity";
 
-export enum UserRole{
-  ADMIN = 'admin',
-  USER = 'user',
-  ORGANIZATION = 'organization'
-} 
-
 @Entity({ name: "users" })
 @ObjectType()
 export class User {
@@ -31,13 +25,9 @@ export class User {
   phone!: string;
 
   @Column()
-  password!: string; 
+  password!: string; // No @Field - don't expose in GraphQL
 
-  @Column({
-    type:'enum',
-    enum:UserRole,
-    default:UserRole.USER
-  })
+  @Column({ length: 50 })
   @Field()
   role!: string;
 
@@ -53,13 +43,14 @@ export class User {
   @Field({ nullable: true })
   deleted_at?: Date;
 
-  @OneToOne(() => UserDetails, details => details.userId)
+  // Relations
+  @OneToOne(() => UserDetails, details => details.user)
   @Field(() => UserDetails, { nullable: true })
   details?: string;
 
   @OneToOne(() => Organization, organization => organization.user)
   @Field(() => [Organization], { nullable: true })
-  organizations?: Organization[];
+  organizations?: string;
 
   @OneToMany(() => JobPost, jobPost => jobPost.organization)
   @Field(() => [JobPost], { nullable: true })
