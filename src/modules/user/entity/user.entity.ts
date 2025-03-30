@@ -53,7 +53,7 @@ export class User {
   @Field({ nullable: true })
   deleted_at?: Date;
 
-  @OneToOne(() => UserDetails, details => details.user)
+  @OneToOne(() => UserDetails, details => details.userId)
   @Field(() => UserDetails, { nullable: true })
   details?: string;
 

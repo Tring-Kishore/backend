@@ -97,7 +97,7 @@ export class UserService {
       const normalizedEmail = email.toLowerCase();
       
       const [user] = await this.userRepository.query(
-        `SELECT id, name, email, password, role FROM users WHERE email = $1`, 
+        `SELECT id, name, email, password, role FROM users WHERE email = $1 AND deleted_at IS NULL`, 
         [normalizedEmail]
       );
   
