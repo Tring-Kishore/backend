@@ -4,14 +4,13 @@ import { UserService } from "./user.service";
 import { LoginInput, UserInput } from "./input";
 import { getRepository } from "typeorm";
 import { Service } from "typedi";
-console.log('the resolver of user');
+import { LoginResponse } from "./response";
+console.log("the resolver of user");
 
 @Resolver()
 @Service()
 export class UserResolver {
-  constructor(
-    private userService = new UserService()
-  ){}
+  constructor(private userService = new UserService()) {}
 
   @Mutation(() => User)
   async signUpUser(@Arg("input") input: UserInput): Promise<User> {
@@ -21,8 +20,11 @@ export class UserResolver {
 
     return this.userService.signUpUser(input);
   }
-  // @Query(() => User)
-  // async login(@Arg("input") input: LoginInput): Promise<string> {
-  //   return this.userService.login(input);
-  // }
+  @Mutation(() => LoginResponse)
+  async login(@Arg("input") input: LoginInput): Promise<LoginResponse> {
+    console.log("the login input", input);
+    const token = await this.userService.login(input);
+    console.log('the token in resolver',token);
+    return token;
+  }
 }
