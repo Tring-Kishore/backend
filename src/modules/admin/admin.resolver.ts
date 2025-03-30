@@ -1,7 +1,8 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Mutation, Query, Resolver , ID } from "type-graphql";
 import { Service } from "typedi";
-import { AllApprovedOrganization, AllRequestedOrganization, DeleteOrganizationResponse, DeleteUserResponse, GetAllUser } from "./response";
+import { AllApprovedOrganization, AllRequestedOrganization, DeleteOrganizationResponse, DeleteUserResponse, GetAllUser, UpdateOrganizationPasswordResponse, UpdateOrganizationStatusResponse } from "./response";
 import { AdminService } from "./admin.service";
+import { DeleteOrganizationInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
 
 @Resolver()
 @Service()
@@ -28,14 +29,23 @@ export class AdminResolver{
         return this.adminService.users();
     }
     @Mutation(() => DeleteUserResponse)
-    async deleteUser(@Arg("id") id:string) : Promise<DeleteUserResponse>
+    async deleteUser(@Arg("id", () => ID) id:string) : Promise<DeleteUserResponse>
     {
         return this.adminService.deleteUser(id);
     }
     @Mutation(() => DeleteOrganizationResponse)
-    async DeleteOrganizationResponse(@Arg("id") id:string):Promise<DeleteOrganizationResponse>
+    async deleteOrganization(@Arg("input")input: DeleteOrganizationInput):Promise<DeleteOrganizationResponse>
     {
-        return this.adminService.deleteOrganization(id);
+        return this.adminService.deleteOrganization(input);
     }
-
+    @Mutation(() => UpdateOrganizationPasswordResponse)
+    async updateOrganizationPassword(@Arg("input") input:UpdateOrganizationPasswordInput):Promise<UpdateOrganizationPasswordResponse>
+    {
+        return this.adminService.updateOrganizationPassword(input);
+    }
+    @Mutation(() => UpdateOrganizationStatusResponse)
+    async updateOrganizationStatus(@Arg("input") input:UpdateOrganizationStatusInput):Promise<UpdateOrganizationStatusResponse>
+    {
+        return this.adminService.updateOrganizationStatus(input);
+    }
 }

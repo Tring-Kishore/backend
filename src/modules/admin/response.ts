@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, ID, ObjectType } from "type-graphql";
 @ObjectType()
 export class GetAllUser{
     @Field()
@@ -15,6 +15,9 @@ export class GetAllUser{
 
     @Field()
     role!: string;
+
+    // @Field({nullable:true})
+    // deleted_at?:Date
 }
 @ObjectType()
 class AdminOganizationUser{
@@ -69,6 +72,7 @@ export class AllApprovedOrganization{
     user!: AdminOganizationUser;
 
 }
+@ObjectType()
 export class AllRequestedOrganization{
     @Field()
     id!:string;
@@ -104,13 +108,15 @@ export class AllRequestedOrganization{
     user!: AdminOganizationUser;
 
 }
+@ObjectType()
 export class DeleteUserResponse{
-    @Field({nullable:true})
+    @Field(() => ID)
     id!:string
 
-    @Field({nullable:true})
+    @Field()
     name!:string
 }
+@ObjectType()
 class DeleteOrganizationUserDetilts{
     @Field()
     id!:string
@@ -122,10 +128,21 @@ class DeleteOrganizationUserDetilts{
     email!:string
 
 }
+@ObjectType()
 export class DeleteOrganizationResponse{
     @Field()
     id!:string
+}
+@ObjectType()
+export class UpdateOrganizationPasswordResponse{
+    @Field()
+    update_password_state!:boolean
+}
+@ObjectType()
+export class UpdateOrganizationStatusResponse{
+    @Field()
+    id!:string
 
-    @Field(() => DeleteOrganizationUserDetilts)
-    user!: DeleteOrganizationUserDetilts;
+    @Field()
+    status!:string
 }
