@@ -58,7 +58,7 @@ export class JobPost {
   @ManyToOne(() => User, user => user.jobPosts)
   @JoinColumn({ name: "organization_id" })
   @Field(() => User)
-  organization!: string;
+  organizationId!: string;
 
   @OneToMany(() => JobApplied, application => application.jobPost)
   @Field(() => [JobApplied], { nullable: true })

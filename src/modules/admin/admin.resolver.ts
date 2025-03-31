@@ -1,4 +1,4 @@
-import { Arg, Mutation, Query, Resolver , ID } from "type-graphql";
+import { Arg, Mutation, Query, Resolver , ID, Int } from "type-graphql";
 import { Service } from "typedi";
 import { AllApprovedOrganization, AllRequestedOrganization, DeleteOrganizationResponse, DeleteUserResponse, GetAllUser, UpdateOrganizationPasswordResponse, UpdateOrganizationStatusResponse } from "./response";
 import { AdminService } from "./admin.service";
@@ -47,5 +47,20 @@ export class AdminResolver{
     async updateOrganizationStatus(@Arg("input") input:UpdateOrganizationStatusInput):Promise<UpdateOrganizationStatusResponse>
     {
         return this.adminService.updateOrganizationStatus(input);
+    }
+    @Query(() => Number)
+    async countOrganizations():Promise<Number>
+    {
+        return this.adminService.countOrganizations();
+    }
+    @Query(() => Number)
+    async countUsers():Promise<Number>
+    {
+        return this.adminService.countUsers();
+    }
+    @Query(() => Number)
+    async countJobPosts():Promise<Number>
+    {
+        return this.adminService.countJobPosts();
     }
 }

@@ -13,12 +13,18 @@ import {
 import { User } from "../user/entity/user.entity";
 import { DeleteOrganizationInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
 import * as bcrypt from "bcrypt";
+import { JobPost } from "../jobs/entity/jobPost.entity";
+import { UserDetails } from "../user/entity/userDetails.entity";
+import { JobApplied } from "../jobs/entity/jobApplied.entity";
 
 @Service()
 export class AdminService {
   constructor(
     private orgRepository = dataSource.getRepository(Organization),
-    private userRepository = dataSource.getRepository(User)
+    private userRepository = dataSource.getRepository(User),
+    private jobpostRepository = dataSource.getRepository(JobPost),
+    private userDetailsRepository = dataSource.getRepository(UserDetails),
+    private jobAppliedRepository = dataSource.getRepository(JobApplied),
   ) {}
   async getAllOrganizations(): Promise<AllApprovedOrganization[]> {
     const organizations = await this.orgRepository.query(`
@@ -123,22 +129,53 @@ export class AdminService {
     return user;
   }
   async deleteUser(id: string): Promise<DeleteUserResponse> {
-    const userResult = await this.userRepository.query(
-      `SELECT id, name FROM users WHERE id = $1`,
-      [id]
-    );
-    const user = userResult[0];
-    await this.userRepository.query(
-      `UPDATE users SET deleted_at = NOW() WHERE id = $1`,
-      [id]
-    );
-    return { id: user.id, name: user.name };
+    try {
+      const [user] = await this.userRepository.query(
+        `SELECT id, name FROM users WHERE id = $1 AND deleted_at IS NULL`,
+        [id]
+      );
+  
+      if (!user) {
+        throw new Error('User not found or already deleted');
+      }
+      await this.userRepository.query('BEGIN');
+  
+      try {
+        await this.userRepository.query(
+          `UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+          [id]
+        );
+
+        await this.userDetailsRepository.query(
+          `UPDATE userdetails SET deleted_at = NOW() WHERE user_id = $1 AND deleted_at IS NULL`,
+          [id]
+        );
+  
+        await this.jobAppliedRepository.query(
+          `UPDATE jobapplied SET deleted_at = NOW() WHERE user_id = $1 AND deleted_at IS NULL`,
+          [id]
+        );
+        await this.userRepository.query('COMMIT');
+  
+        return { id: user.id, name: user.name };
+  
+      } catch (error) {
+        await this.userRepository.query('ROLLBACK');
+        throw new Error('Failed to delete user');
+      }
+  
+    } catch (error: any) {
+      if (error.message === 'User not found or already deleted') {
+        throw error;
+      }
+      throw new Error('Failed to delete user');
+    }
   }
   async deleteOrganization(input:DeleteOrganizationInput): Promise<DeleteOrganizationResponse> {
     const [organization] = await this.orgRepository.query(
         `SELECT organization_id FROM organizations WHERE id = $1 AND deleted_at IS NULL`,[input.id]
     );
-    const deleteOrganization = await this.orgRepository.query(
+    await this.orgRepository.query(
         `UPDATE organizations SET deleted_at = NOW() WHERE id = $1 AND deleted_At IS NULL`,[input.id]
     );
     console.log('deleting for organization',organization.organization_id);
@@ -146,26 +183,38 @@ export class AdminService {
     await this.userRepository.query(
         `UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,[organization.organization_id]
     );
+
+    await this.jobpostRepository.query(
+      `UPDATE jobposts SET deleted_at = NOW() WHERE organization_id = $1 AND deleted_at IS NULL`,[organization.organization_id]
+    );
+
+    await this.jobAppliedRepository.query(
+      `UPDATE jobapplied SET deleted_at = NOW() WHERE organization_id = $1 AND deleted_at IS NULL`,[organization.organization_id]
+    );
+
     return {id:input.id};
   }
   async updateOrganizationPassword(
     input: UpdateOrganizationPasswordInput
   ): Promise<UpdateOrganizationPasswordResponse> {
-    const organization = await this.orgRepository.findOne({
-      where: { id: input.id },
-    });
+    // const organization = await this.orgRepository.findOne({
+    //   where: { id: input.id },
+    // });
 
-    console.log("it is taking the id ", input.id);
+    // console.log("it is taking the id ", input.id);
 
     const hashedPassword = await bcrypt.hash(input.password, 10);
-    const updatePasswordUserTable = await this.userRepository.query(
+    
+    // update password in user table
+    await this.userRepository.query(
       `
             UPDATE users SET password = $1 WHERE id = $2 AND deleted_at IS NULL
             `,
       [hashedPassword, input.id]
     );
 
-    const updatePassword = await this.orgRepository.query(
+    // update password state
+    await this.orgRepository.query(
       `
             UPDATE organizations SET update_password_state = true WHERE organization_id = $1 AND deleted_at IS NULL
             `,
@@ -185,5 +234,31 @@ export class AdminService {
         UPDATE organizations SET status = $1 WHERE id = $2
         `,[input.status,input.id]);
     return {id:input.id , status:input.status};
+  }
+  async countOrganizations():Promise<Number>
+  {
+    const result = await this.userRepository.query(
+      `SELECT COUNT(id) FROM users WHERE role = 'organization' AND deleted_at IS NULL`
+    );
+    const count = parseInt(result[0].count);
+    console.log('The organization count is', count);
+
+    return count;
+  }
+  async countUsers():Promise<Number>
+  {
+    const result = await this.userRepository.query(
+      `SELECT COUNT(id) FROM users WHERE role = 'user' AND deleted_at IS NULL`
+    );
+    const count = parseInt(result[0].count);
+    return count;
+  }
+  async countJobPosts():Promise<Number>
+  {
+    const result = await this.jobpostRepository.query(
+      `SELECT COUNT(id) FROM jobposts WHERE deleted_at IS NULL`
+    );
+    const count = parseInt(result[0].count);
+    return count;
   }
 }

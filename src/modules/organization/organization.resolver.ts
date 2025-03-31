@@ -1,9 +1,10 @@
-import { Arg, Mutation, Resolver } from "type-graphql";
+import { Arg, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Organization } from "./entity/organization.entity";
 import { OrganizationService } from "./organization.service";
-import { OrganizationInput } from "./input";
+import { AddJobPostInput, GetAllJobPostByOrganizationInput, GetJobAppliedApplicationsInput, OrganizationIdInput, OrganizationInput, UpdateJobPostInput, UpdatJobAppliedStatusInput } from "./input";
 import { UserInput } from "../user/input";
 import { Service } from "typedi";
+import { AddJobPostResponse, GetAllJobPostByOrganizationResponse, GetJobAppliedApplicationsResponse, UpdateJobPostResponse, UpdatJobAppliedStatusResponse } from "./organization.response";
 
 @Resolver()
 @Service()
@@ -30,4 +31,44 @@ export class OrganizationResolver {
       throw error;
     }
   }
+  // adding job post
+  @Mutation(() =>AddJobPostResponse)
+  async addJobPost(@Arg("input")input:AddJobPostInput):Promise<AddJobPostResponse>
+  {
+    return this.organizationService.addJobPost(input);
+  }
+  // get job post posted by organization
+  @Query(() => [GetAllJobPostByOrganizationResponse])
+  async jobPosts(@Arg("input")input:GetAllJobPostByOrganizationInput):Promise<GetAllJobPostByOrganizationResponse[]>
+  {
+    return  this.organizationService.jobPosts(input);
+  }
+  //Update job post
+  @Mutation(() => UpdateJobPostResponse)
+  async updateJobPost(@Arg("input")input:UpdateJobPostInput):Promise<UpdateJobPostResponse>
+  {
+    return this.organizationService.updateJobPost(input);
+  }
+  //getting job apllications
+  @Query(() => [GetJobAppliedApplicationsResponse])
+  async jobApplied(@Arg("input")input:GetJobAppliedApplicationsInput):Promise<GetJobAppliedApplicationsResponse[]>
+  {
+    return this.organizationService.jobApplied(input);
+  }
+  @Mutation(() => UpdatJobAppliedStatusResponse)
+  async updateApplicationStatus(@Arg("input")input:UpdatJobAppliedStatusInput):Promise<UpdatJobAppliedStatusResponse>
+  {
+    return this.organizationService.updateApplicationStatus(input);
+  }
+  @Query(() => Number)
+  async countOrganizationJobPosts(@Arg("input")input:OrganizationIdInput):Promise<Number>
+  {
+    return this.organizationService.countOrganizationJobPosts(input);
+  }
+  @Query(() => Number)
+  async countOrganizationApplications(@Arg("input")input:OrganizationIdInput):Promise<Number>
+  {
+    return this.organizationService.countOrganizationApplications(input);
+  }
+  
 }
