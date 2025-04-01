@@ -124,4 +124,30 @@ export class UserDetailsResponse{
   @Field()
   description?:string
 
+  @Field({ nullable: true })
+  resumeUrl?: string;
+
 }
+@ObjectType()
+export class WithdrawApplicationResponse{
+  @Field()
+  id!:string
+}
+@ObjectType()
+export class SignedUrlResponse {
+  @Field()
+  url?: string;
+
+  @Field()
+  key?: string;
+}
+
+@ObjectType()
+export class FileUploadResponse {
+  @Field()
+  url?: string;
+
+  @Field()
+  key?: string;
+}
+

@@ -111,6 +111,6 @@
     "skipLibCheck": true ,                            /* Skip type checking all .d.ts files. */
     "experimentalDecorators": true, // Required for decorators to work
     "emitDecoratorMetadata": true,  // Required for TypeORM to infer types
- 
+    
   }
 }
