@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 interface EmailOptions {
-  from: string;
+  from: any;
   to: string;
   subject: string;
   text: string;
@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 export async function sendEmail({ from, to, subject, text }: EmailOptions): Promise<void> {
   console.log('The from email:', from);
   
-  const mailOptions = {
+  const mailOptions : any = {
     from,
     to,
     subject, 

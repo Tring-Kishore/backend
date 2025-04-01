@@ -1,8 +1,7 @@
-const secureRandomPassword = require('secure-random-password');
-
-const generatePassword = () => {
+import * as secureRandomPassword from 'secure-random-password';
+export const generatePassword = () => {
   return secureRandomPassword.randomPassword({
-    length: 6,
+    length: 7,
     characters: [
       secureRandomPassword.lower,
       secureRandomPassword.upper,
@@ -11,5 +10,3 @@ const generatePassword = () => {
     ],
   });
 };
-
-module.exports = { generatePassword };

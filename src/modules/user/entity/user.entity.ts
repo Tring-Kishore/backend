@@ -61,7 +61,7 @@ export class User {
   @Field(() => [Organization], { nullable: true })
   organizations?: Organization[];
 
-  @OneToMany(() => JobPost, jobPost => jobPost.organization)
+  @OneToMany(() => JobPost, jobPost => jobPost.organizationId)
   @Field(() => [JobPost], { nullable: true })
   jobPosts?: JobPost[];
 
