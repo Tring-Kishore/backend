@@ -1,7 +1,7 @@
 import { getRepository } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
-import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UserIdInput, UserInput } from "./input";
+import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { Service } from "typedi";
@@ -9,7 +9,7 @@ import dataSource from "../../database/data-source";
 import { OrganizationService } from "../../modules/organization/organization.service";
 import { Organization } from "../organization/entity/organization.entity";
 import * as jwt from "jsonwebtoken";
-import { JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UserDetailsResponse } from "./response";
+import {  JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UserDetailsResponse, WithdrawApplicationResponse } from "./response";
 import { GetAllUser } from "modules/admin/response";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
@@ -42,21 +42,6 @@ export class UserService {
       const hashedPassword = await bcrypt.hash(password, 10);
       const userId = uuidv4();
 
-      
-      // const user = new User();
-      // user.id = userId;
-      // user.name = name;
-      // user.email = normalizedEmail;
-      // user.phone = phone;
-      // user.password = hashedPassword;
-      // user.role = "user";
-      // {      id:userId,
-      //   name : name,
-      //   email : normalizedEmail,
-      //   phone : phone,
-      //   password : hashedPassword,
-      //   role : "user"}
-
       const savedUser = await this.userRepository.save( {id:userId,
         name : name,
         email : normalizedEmail,
@@ -66,25 +51,14 @@ export class UserService {
 
       console.log('the saved user ',savedUser);
       
-      const userDetails = await this.userDetailsRepository.save({
+      await this.userDetailsRepository.save({
         id: uuidv4(),
         userId: savedUser.id,
         age: 18,
-        experience : "-",
-        skills: "-",
-        description:"-",
+        experience : "",
+        skills: "",
+        description:"",
       })
-      // userDetails.id = uuidv4();
-
-      
-
-      // userDetails.user = userId;
-      // userDetails.age = 18;
-      // userDetails.experience = "-";
-      // userDetails.skills = "-";
-      // userDetails.description = "-";
-
-      // await this.userDetailsRepository.save(userDetails);
 
       console.log("User created successfully:", savedUser);
       return savedUser;
@@ -165,34 +139,46 @@ export class UserService {
   //applying for job
   async applyForJob(input: JobApplyInput): Promise<JobApplyResponse> {
     try {
-    
-      const [existingApplication] = await this.jobAppliedRepository.query(
-        `SELECT * FROM jobapplied 
-         WHERE jobpost_id = $1 AND user_id = $2 AND deleted_at IS NULL`,
-        [input.jobpost_id, input.user_id]
-      );
-  
-      if (existingApplication) {
-        throw new Error('You have already applied for this job');
-      }
-  
-      const id = uuidv4();
-      const [result] = await this.jobAppliedRepository.query(
-        `INSERT INTO jobapplied (
-          id, jobpost_id, user_id, organization_id, status
-        ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [id, input.jobpost_id, input.user_id, input.organization_id, 'applied']
-      );
-  
-      return result;
-  
-    } catch (error : any) {
-      if (error.message === 'You have already applied for this job') {
-        throw error;
-      }
-      throw new Error('Failed to apply for job');
+        
+        const [existingApplication] = await this.jobAppliedRepository.query(
+            `SELECT * FROM jobapplied 
+             WHERE jobpost_id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+            [input.jobpost_id, input.user_id]
+        );
+
+        if (existingApplication) {
+            throw new Error('You have already applied for this job');
+        }
+
+        
+        const [checking] = await this.userDetailsRepository.query(`
+            SELECT age, experience, skills, description FROM userdetails WHERE user_id = $1
+        `, [input.user_id]);
+
+        
+        if (!checking || checking.age === null || checking.experience === null || 
+            !checking.skills || !checking.description) {
+            throw new Error('Please complete your profile before applying for a job');
+        }
+
+        const id = uuidv4();
+        const [result] = await this.jobAppliedRepository.query(
+            `INSERT INTO jobapplied (
+                id, jobpost_id, user_id, organization_id, status
+            ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [id, input.jobpost_id, input.user_id, input.organization_id, 'applied']
+        );
+
+        return result;
+
+    } catch (error: any) {
+        if (error.message === 'You have already applied for this job' || 
+            error.message === 'Please complete your profile before applying for a job') {
+            throw error;
+        }
+        throw new Error('Failed to apply for job');
     }
-  }
+}
   //getting user applie jobs
   async getUserJobApplied(input:JobAppliedByUserInput):Promise<JobAppliedByUserResponse[]>
   {
@@ -257,4 +243,18 @@ WHERE u.id = $1
     return result[0];
 
   }
+  //withdraw application 
+  async withdrawApplication(input:WithdrawApplicationInput):Promise<WithdrawApplicationResponse>
+  {
+    await this.jobAppliedRepository.query(`
+      UPDATE jobapplied SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL 
+      `,[input.id])
+
+    const withdraw = await this.jobAppliedRepository.query(`
+      SELECT id FROM jobapplied WHERE id = $1
+      `,[input.id]);
+
+    return withdraw[0];
+  }
+  
 }

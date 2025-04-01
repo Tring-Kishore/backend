@@ -73,3 +73,36 @@ export class UpdateUserInput{
   description?:string
 
 }
+@InputType()
+export class WithdrawApplicationInput{
+  @Field()
+  id!:string
+}
+
+
+@InputType()
+export class GetUploadSignedUrlInput {
+  @Field()
+  fileName?: string;
+
+  @Field({ nullable: true })
+  folder?: string;
+}
+
+@InputType()
+export class GetDownloadSignedUrlInput {
+  @Field()
+  fileKey?: string;
+}
+
+@InputType()
+export class DirectUploadInput {
+  @Field()
+  file?: string; // Base64 encoded file
+
+  @Field()
+  fileName?: string;
+
+  @Field({ nullable: true })
+  folder?: string;
+}

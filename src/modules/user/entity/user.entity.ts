@@ -59,7 +59,7 @@ export class User {
 
   @OneToOne(() => Organization, organization => organization.user)
   @Field(() => [Organization], { nullable: true })
-  organizations?: Organization[];
+  organizations?: Organization;
 
   @OneToMany(() => JobPost, jobPost => jobPost.organizationId)
   @Field(() => [JobPost], { nullable: true })
