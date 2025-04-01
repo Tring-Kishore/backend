@@ -16,7 +16,9 @@ import * as bcrypt from "bcrypt";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { UserDetails } from "../user/entity/userDetails.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
-
+import { generatePassword } from '../../../utils/passwordGenerator';
+import { sendEmail } from "../../../utils/emailSender";
+import nodemailer from 'nodemailer';
 @Service()
 export class AdminService {
   constructor(
@@ -229,10 +231,41 @@ export class AdminService {
   }
   async updateOrganizationStatus(input : UpdateOrganizationStatusInput):Promise<UpdateOrganizationStatusResponse>
   {
-    const organization = this.orgRepository.findOne({where:{id:input.id}});
+    const [organization] = await this.orgRepository.query(
+      `SELECT id, organization_id FROM organizations WHERE id = $1`,
+      [input.id]
+    );
+    const [orgId] = await this.orgRepository.query(`SELECT organization_id FROM organizations WHERE id = $1`,[input.id]);
+    const [user] = await this.userRepository.query(`SELECT email FROM users WHERE id = $1 AND deleted_at IS NULL`,[orgId.organization_id]);
     await this.orgRepository.query(`
         UPDATE organizations SET status = $1 WHERE id = $2
         `,[input.status,input.id]);
+        if (input.status === 'approved' || input.status === 'rejected') {
+          let emailSubject = `Application Status Updated: ${input.status}`;
+          let emailText = '';
+    
+          if (input.status === 'approved') {
+            const defaultPassword = generatePassword();
+            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    
+            await this.userRepository.query(
+              'UPDATE users SET password = $1 WHERE id = $2',
+              [hashedPassword, orgId.organization_id]
+            );
+    
+            emailText = `Your organization has been approved. 
+            The default password is ${defaultPassword}. After logging in, you can change the password.`;
+          } else if (input.status === 'rejected') {
+            emailText = `Your application has been rejected.`;
+          }
+    
+          await sendEmail({
+            from: process.env.EMAIL,
+            to: user.email,
+            subject: emailSubject,
+            text: emailText,
+          });
+        }
     return {id:input.id , status:input.status};
   }
   async countOrganizations():Promise<Number>

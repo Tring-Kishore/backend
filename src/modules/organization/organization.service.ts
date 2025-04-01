@@ -9,6 +9,8 @@ import { Service } from "typedi";
 import { AddJobPostResponse, GetAllJobPostByOrganizationResponse, GetJobAppliedApplicationsResponse, UpdateJobPostResponse, UpdatJobAppliedStatusResponse} from "./organization.response";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
+import { generatePassword } from "../../../utils/passwordGenerator";
+import { sendEmail } from "../../../utils/emailSender";
 
 @Service()
 export class OrganizationService {
@@ -40,7 +42,7 @@ export class OrganizationService {
       }
 
       // Create user
-      const defaultPassword = "Pass@123"; // More secure default password
+      const defaultPassword = generatePassword();
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
       const user = new User();
@@ -63,6 +65,13 @@ export class OrganizationService {
       organization.location = location;
 
       const savedOrganization = await this.orgRepository.save(organization);
+
+      await sendEmail({
+        from: process.env.EMAIL,
+        to: normalizedEmail,
+        subject: 'Wait until admin approve',
+        text: 'Welcome to Job Found, You have signed up, wait until admin accepts',
+      });
 
       console.log('Organization created successfully:', savedOrganization);
       return savedOrganization;
