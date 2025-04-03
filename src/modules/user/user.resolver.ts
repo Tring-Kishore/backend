@@ -20,32 +20,12 @@ import {
   UserDetailsResponse,
   WithdrawApplicationResponse,
 } from "./response";
-// import { GraphQLUpload } from 'graphql-upload';
-import { createWriteStream } from 'fs';
-import { S3 } from 'aws-sdk';
-import { v4 as uuidv4 } from "uuid";
-// import { FileService } from "../../service/service";
-import {
-  GetUploadSignedUrlInput,
-  GetDownloadSignedUrlInput,
-  DirectUploadInput,
-} from "../user/input";
-import {
-  SignedUrlResponse,
-  FileUploadResponse,
-} from "../user/response";
 console.log("the resolver of user");
 
 @Resolver()
 @Service()
 export class UserResolver {
   constructor(private userService = new UserService(),
-  private s3 = new S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION,
-  }),
-  // private fileService = new FileService(),
 ) {}
 
 
@@ -99,29 +79,7 @@ export class UserResolver {
   {
     return this.userService.withdrawApplication(input);
   }
-  // @Authorized() // Or whatever auth you need
-  // @Mutation(() => SignedUrlResponse)
-  // async getUploadSignedUrl(
-  //   @Arg("input") input: GetUploadSignedUrlInput
-  // ): Promise<SignedUrlResponse> {
-  //   return this.fileService.getUploadSignedUrl(input);
-  // }
-
-  // @Authorized()
-  // @Mutation(() => SignedUrlResponse)
-  // async getDownloadSignedUrl(
-  //   @Arg("input") input: GetDownloadSignedUrlInput
-  // ): Promise<SignedUrlResponse> {
-  //   return this.fileService.getDownloadSignedUrl(input);
-  // }
-
-  // @Authorized()
-  // @Mutation(() => FileUploadResponse)
-  // async directUpload(
-  //   @Arg("input") input: DirectUploadInput
-  // ): Promise<FileUploadResponse> {
-  //   return this.fileService.directUpload(input);
-  // }
+ 
 
   
 
