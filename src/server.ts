@@ -7,7 +7,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 const app = express();
-const port = 4000;
+const port = 5000;
 
 
 dataSource.initialize()

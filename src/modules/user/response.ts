@@ -1,4 +1,4 @@
-import { ObjectType, Field, } from "type-graphql";
+import { ObjectType, Field,} from "type-graphql";
 
 @ObjectType()
 export class LoginResponse {
@@ -125,7 +125,7 @@ export class UserDetailsResponse{
   description?:string
 
   @Field({ nullable: true })
-  resumeUrl?: string;
+  resumeKey?: string;
 
 }
 @ObjectType()
@@ -149,5 +149,13 @@ export class FileUploadResponse {
 
   @Field()
   key?: string;
+}
+@ObjectType()
+export class UploadResumeResponse{
+  @Field()
+  id!:string
+
+  @Field()
+  resumeKey!:string
 }
 
