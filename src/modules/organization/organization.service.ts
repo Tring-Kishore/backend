@@ -135,16 +135,20 @@ export class OrganizationService {
   }
   async updateApplicationStatus(input:UpdatJobAppliedStatusInput):Promise<UpdatJobAppliedStatusResponse>
   {
-    // await this.jobAppliedRepository.query(
-    //   `UPDATE jobapplied
-    //    SET status = $1, updated_at = NOW()
-    //    WHERE id = $2
-    //    RETURNING *`,
-    //   [input.status, input.id]
-    // );
-
     await this.jobAppliedRepository.update({id:input.id},{status:input.status,updated_at: new Date()});
     const updatedJobApplied = await this.jobAppliedRepository.findOne({where:{id:input.id},select:['id','status']});
+    const applicantMail = await this.jobAppliedRepository.query(
+      `SELECT user_id FROM jobapplied WHERE id = $1`,[input.id]
+    );
+    const userEmail = await this.userRepository.findOne({where:{id:applicantMail.user_id}});
+    const userId = applicantMail?.[0]?.user_id;
+    const userEmail2 : any = await this.userRepository.findOne({ where: { id: userId },select:['email'] });
+    await sendEmail({
+      from: process.env.EMAIL,
+      to: userEmail2.email,
+      subject: `Regarding Application Status`,
+      text: `Your Application has got ${input.status}`,
+    });
     return {id:input.id,status:input.status};
   }
   async countOrganizationJobPosts(input:OrganizationIdInput):Promise<Number>
