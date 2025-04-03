@@ -1,4 +1,4 @@
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, } from "type-graphql";
 
 @InputType()
 export class UserInput {
@@ -72,37 +72,21 @@ export class UpdateUserInput{
   @Field()
   description?:string
 
+
 }
 @InputType()
 export class WithdrawApplicationInput{
   @Field()
   id!:string
 }
-
-
 @InputType()
-export class GetUploadSignedUrlInput {
+export class UploadResumeInput{
   @Field()
-  fileName?: string;
+  id!:string
 
-  @Field({ nullable: true })
-  folder?: string;
+  @Field()
+  resumeKey!:string
 }
 
-@InputType()
-export class GetDownloadSignedUrlInput {
-  @Field()
-  fileKey?: string;
-}
 
-@InputType()
-export class DirectUploadInput {
-  @Field()
-  file?: string; // Base64 encoded file
 
-  @Field()
-  fileName?: string;
-
-  @Field({ nullable: true })
-  folder?: string;
-}

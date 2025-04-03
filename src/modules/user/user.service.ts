@@ -1,7 +1,7 @@
 import { getRepository } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
-import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
+import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { Service } from "typedi";
@@ -9,10 +9,12 @@ import dataSource from "../../database/data-source";
 import { OrganizationService } from "../../modules/organization/organization.service";
 import { Organization } from "../organization/entity/organization.entity";
 import * as jwt from "jsonwebtoken";
-import {  JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UserDetailsResponse, WithdrawApplicationResponse } from "./response";
+import {  JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UploadResumeResponse, UserDetailsResponse, WithdrawApplicationResponse } from "./response";
 import { GetAllUser } from "modules/admin/response";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
+import { UploadPdfInput } from "modules/s3/s3.input";
+import { UploadPdfResponse } from "modules/s3/s3.response";
 @Service()
 export class UserService {
    constructor(
@@ -209,7 +211,7 @@ export class UserService {
   async user(input:UserIdInput):Promise<UserDetailsResponse>
   {
     const result = await this.userRepository.query(`
-      SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description FROM users u
+      SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description, ud.resume AS "resumeKey" FROM users u
 INNER JOIN userdetails ud ON u.id = ud.user_id
 WHERE u.id = $1
       `,[input.id]);
@@ -234,7 +236,7 @@ WHERE u.id = $1
     );
 
     const result = await this.userRepository.query(`
-      SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description FROM users u
+      SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description  FROM users u
 INNER JOIN userdetails ud ON u.id = ud.user_id
 WHERE u.id = $1
       `,[input.id]);
@@ -255,6 +257,18 @@ WHERE u.id = $1
       `,[input.id]);
 
     return withdraw[0];
+  }
+  async uploadResume(input:UploadResumeInput):Promise<UploadResumeResponse>
+  {
+    await this.userDetailsRepository.query(
+      `UPDATE userdetails SET resume = $1 WHERE user_id = $2 AND deleted_at IS NULL`,[input.resumeKey,input.id]
+    )
+    console.log('the resume updated successfully',input.resumeKey);
+    
+    return {
+      id:input.id,
+      resumeKey:input.resumeKey
+    }
   }
   
 }

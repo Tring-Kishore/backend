@@ -6,6 +6,7 @@ import {
   JobApplyInput,
   LoginInput,
   UpdateUserInput,
+  UploadResumeInput,
   UserIdInput,
   UserInput,
   WithdrawApplicationInput,
@@ -17,9 +18,12 @@ import {
   JobApplyResponse,
   JobPostResponse,
   LoginResponse,
+  UploadResumeResponse,
   UserDetailsResponse,
   WithdrawApplicationResponse,
 } from "./response";
+import { UploadPdfResponse } from "modules/s3/s3.response";
+import { UploadPdfInput } from "modules/s3/s3.input";
 console.log("the resolver of user");
 
 @Resolver()
@@ -67,17 +71,24 @@ export class UserResolver {
   @Query(() => UserDetailsResponse)
   async user(@Arg("input")input:UserIdInput):Promise<UserDetailsResponse>
   {
+    
     return this.userService.user(input);
   }
   @Mutation(() => UserDetailsResponse)
   async updateUser(@Arg("input")input:UpdateUserInput):Promise<UserDetailsResponse>
   {
+    
     return this.userService.updateUser(input);
   }
   @Mutation(() => WithdrawApplicationResponse)
   async withdrawApplication(@Arg("input")input:WithdrawApplicationInput):Promise<WithdrawApplicationResponse>
   {
     return this.userService.withdrawApplication(input);
+  }
+  @Mutation(() => UploadResumeResponse)
+  async uploadResume(@Arg("input")input:UploadResumeInput):Promise<UploadResumeResponse>
+  {
+    return this.userService.uploadResume(input);
   }
  
 
