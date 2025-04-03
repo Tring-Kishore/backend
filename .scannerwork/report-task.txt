@@ -1,0 +1,6 @@
+projectKey=JobPortalBackend
+serverUrl=http://quality.tringbytes.com
+serverVersion=9.9.8.100196
+dashboardUrl=http://quality.tringbytes.com/dashboard?id=JobPortalBackend
+ceTaskId=AZX1JhnAPemNd4lE79JM
+ceTaskUrl=http://quality.tringbytes.com/api/ce/task?id=AZX1JhnAPemNd4lE79JM
