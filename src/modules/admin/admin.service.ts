@@ -19,6 +19,7 @@ import { JobApplied } from "../jobs/entity/jobApplied.entity";
 import { generatePassword } from '../../../utils/passwordGenerator';
 import { sendEmail } from "../../../utils/emailSender";
 import nodemailer from 'nodemailer';
+import { IsNull } from "typeorm";
 @Service()
 export class AdminService {
   constructor(
@@ -34,8 +35,7 @@ export class AdminService {
             FROM users u
             INNER JOIN organizations o ON u.id = o.organization_id
             WHERE u.role = 'organization' 
-            AND u.deleted_at IS NULL 
-            AND o.status = 'approved';
+            
         `);
 
     return organizations.map(
@@ -199,15 +199,21 @@ export class AdminService {
   async updateOrganizationPassword(
     input: UpdateOrganizationPasswordInput
   ): Promise<UpdateOrganizationPasswordResponse> {
-    // const organization = await this.orgRepository.findOne({
-    //   where: { id: input.id },
-    // });
-
-    // console.log("it is taking the id ", input.id);
-
-    const hashedPassword = await bcrypt.hash(input.password, 10);
     
-    // update password in user table
+    const user = await this.userRepository.query(
+      `SELECT password FROM users WHERE id = $1 AND deleted_at IS NULL`,[input.id]
+    );
+    
+    const res = user[0];
+    console.log('the old password is ',user[0].password);
+    const isOldPassword = await bcrypt.compare(input.oldPassword,user[0].password);
+    if(!isOldPassword)
+    {
+      throw new Error('Current password is incorrect');
+    }
+    const hashedPassword = await bcrypt.hash(input.newPassword, 10);
+    
+    
     await this.userRepository.query(
       `
             UPDATE users SET password = $1 WHERE id = $2 AND deleted_at IS NULL
@@ -215,7 +221,7 @@ export class AdminService {
       [hashedPassword, input.id]
     );
 
-    // update password state
+    
     await this.orgRepository.query(
       `
             UPDATE organizations SET update_password_state = true WHERE organization_id = $1 AND deleted_at IS NULL
@@ -223,7 +229,7 @@ export class AdminService {
       [input.id]
     );
 
-    console.log("the password is ", input.password);
+    console.log("the password is ", input.newPassword);
 
     return {
       update_password_state: true,
