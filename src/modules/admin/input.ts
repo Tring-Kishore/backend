@@ -6,7 +6,10 @@ export class UpdateOrganizationPasswordInput{
     id!:string
 
     @Field()
-    password!:string
+    oldPassword!:string
+
+    @Field()
+    newPassword!:string
 }
 @InputType()
 export class UpdateOrganizationStatusInput{
