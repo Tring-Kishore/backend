@@ -26,7 +26,6 @@ export class JobApplied {
   @Field({ nullable: true })
   deleted_at?: Date;
 
-  // Relations
   @ManyToOne(() => JobPost, jobPost => jobPost.applications)
   @JoinColumn({ name: "jobpost_id" })
   @Field(() => JobPost)
