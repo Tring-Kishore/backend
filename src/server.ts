@@ -6,10 +6,12 @@ import { expressMiddleware } from '@apollo/server/express4';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
-const app = express();
+import { User } from './modules/user/entity/user.entity';
+//import helmet from 'helmet';
+const app = express() as any;
 const port = 4000;
 
-
+//app.use(helmet());
 dataSource.initialize()
   .then(async () => {
     console.log("DB Connected");
@@ -30,7 +32,12 @@ dataSource.initialize()
         context: async ({ req }) => {
           const token = req.headers.authorization?.split(' ')[1] || '';
           try {
-            const decoded = jwt.verify(token, "Eoin Kishore");
+            const decoded : any= jwt.verify(token, "Eoin Kishore");
+            const userRepository = dataSource.getRepository(User); 
+            const user  = await userRepository.findOne({ where: { id: decoded.id } });
+            if (!user) {
+              return { user: null, tokenInvalid: true };
+            }
             return { user: decoded };
           } catch (error) {
             return { user: null };

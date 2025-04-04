@@ -132,6 +132,9 @@ export class GetJobAppliedApplicationsResponse{
 
   @Field()
   skills!:string
+
+  @Field({nullable:true})
+  resumeKey!:string
 }
 @ObjectType()
 export class UpdatJobAppliedStatusResponse{

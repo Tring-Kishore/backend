@@ -41,7 +41,7 @@ export class OrganizationService {
         throw new Error("User already exists");
       }
 
-      // Create user
+      
       const defaultPassword = generatePassword();
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
@@ -53,9 +53,9 @@ export class OrganizationService {
       user.password = hashedPassword;
       user.role = UserRole.ORGANIZATION;
       
-      const savedUser = await this.userRepository.save(user);
+      await this.userRepository.save(user);
 
-      // Create organization
+      
       const organization = new Organization();
       organization.id = orgId;
       organization.user = { id: userId } as User;
@@ -85,6 +85,10 @@ export class OrganizationService {
   {
     const id = uuidv4();
 
+    // const result  = await this.jobPostRepository.save({
+    //   id: id, job_title:input.job_title,category:input.category,openings:input.openings,experience:input.experience,description:input.description,package:input.package,language:input.package,skills:input.package,organization_id:input.organization_id
+    // });
+
       const [result] = await this.jobPostRepository.query(
         `INSERT INTO jobposts (
           id, job_title, category, openings, experience, description, package, language, skills, organization_id
@@ -97,11 +101,10 @@ export class OrganizationService {
   }
   async jobPosts(input:GetAllJobPostByOrganizationInput):Promise<GetAllJobPostByOrganizationResponse[]>
   {
+    // const posts  = this.jobPostRepository.findOne({where:{id:input.id},select:['id','job_title','category','openings','experience','description','package','language','skills','organization']})
     const posts = this.jobPostRepository.query(
       `SELECT id, job_title, category, openings, experience, description, package, language, skills, organization_id FROM jobposts WHERE organization_id = $1`,[input.id]
     );
-    
-    
     console.log('the posts are ',posts);
     
     return posts;
@@ -123,9 +126,10 @@ export class OrganizationService {
         ja.id, ja.jobpost_id, ja.organization_id, ja.user_id, ja.status, ja.created_at, ja.updated_at,
         u.name, u.email,
         jp.job_title, jp.category, jp.openings, jp.skills,
-        org.name AS company
+        org.name AS company , ud.resume AS "resumeKey"
        FROM jobapplied ja
        JOIN users u ON ja.user_id = u.id
+       JOIN userdetails ud ON ud.user_id = u.id
        JOIN jobposts jp ON ja.jobpost_id = jp.id
        JOIN users org ON ja.organization_id = org.id
        WHERE ja.organization_id = $1 AND ja.deleted_at IS NULL`,
