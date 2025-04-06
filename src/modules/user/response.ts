@@ -37,6 +37,9 @@ export class JobPostResponse {
   skills!: string;
 
   @Field()
+  status!:string;
+
+  @Field()
   organization_id!: string;
 
   @Field()

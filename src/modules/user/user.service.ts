@@ -1,4 +1,4 @@
-import { getRepository, IsNull } from "typeorm";
+import { Any, getRepository, IsNull } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
 import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
@@ -126,12 +126,12 @@ export class UserService {
   }
   async allJobPosts():Promise<JobPostResponse[]>
   {
-    const posts  = await this.jobPostRepository.find({
+    const posts : any  = await this.jobPostRepository.find({
       where: { deleted_at: IsNull() },
       relations: ['organization'],});
       console.log('the post are',posts);
       
-      return posts.map(post => ({
+      return posts.map((post:any) => ({
         id: post.id,
         job_title: post.job_title,
         category: post.category,
@@ -143,6 +143,7 @@ export class UserService {
         skills: post.skills,
         organization_id: post.organization.id,
         organization_name: post.organization.name,
+        status: post.status,
       }));
   }
   //applying for job

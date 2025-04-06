@@ -1,8 +1,8 @@
 import { Arg, Mutation, Query, Resolver , ID, Int } from "type-graphql";
 import { Service } from "typedi";
-import { AllApprovedOrganization, AllRequestedOrganization, DeleteOrganizationResponse, DeleteUserResponse, GetAllUser, UpdateOrganizationPasswordResponse, UpdateOrganizationStatusResponse } from "./response";
+import { AllApprovedOrganization, AllRequestedOrganization, DeleteOrganizationResponse, DeleteUserResponse, GetAllUser, UpdateJobPostStatusResponse, UpdateOrganizationPasswordResponse, UpdateOrganizationStatusResponse } from "./response";
 import { AdminService } from "./admin.service";
-import { DeleteOrganizationInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
+import { DeleteOrganizationInput, UpdateJobPostStatusInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
 
 @Resolver()
 @Service()
@@ -63,4 +63,10 @@ export class AdminResolver{
     {
         return this.adminService.countJobPosts();
     }
+    @Mutation(() => UpdateJobPostStatusResponse)
+  async updateJobPostStatus(
+    @Arg('input') input: UpdateJobPostStatusInput
+  ) {
+    return this.adminService.updateStatus(input);
+  }
 }

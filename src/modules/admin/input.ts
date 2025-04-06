@@ -24,3 +24,11 @@ export class DeleteOrganizationInput{
     @Field()
     id!:string
 }
+@InputType()
+export class UpdateJobPostStatusInput {
+    @Field()
+    id!: string;
+
+    @Field()
+    status!:string;
+  }

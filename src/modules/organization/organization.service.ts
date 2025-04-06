@@ -110,6 +110,7 @@ export class OrganizationService {
       language: input.language,
       skills: input.skills,
       organization: {id:input.organization_id},
+      status:'pending',
     });
     return {
       ...result,
@@ -126,7 +127,7 @@ export class OrganizationService {
 
     console.log("the posts are ", posts);
 
-    return posts.map((post) => ({
+    return posts.map((post : any) => ({
       id: post.id,
       job_title: post.job_title,
       category: post.category,
@@ -137,6 +138,7 @@ export class OrganizationService {
       language: post.language,
       skills: post.skills,
       organization_id: post.organization.id,
+      status:post.status,
     }));
   }
   async updateJobPost(

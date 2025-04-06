@@ -31,6 +31,7 @@ dataSource.initialize()
           }
           try {
             const decoded: any = jwt.verify(token, "Eoin Kishore");
+            
             return { user: decoded };
           } catch (err) {
             return { user: null };
