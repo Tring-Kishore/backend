@@ -109,7 +109,6 @@ export class OrganizationService {
       package: input.package,
       language: input.language,
       skills: input.skills,
-      status:'pending',
       organization: {id:input.organization_id},
     });
     return {

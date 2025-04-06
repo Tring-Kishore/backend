@@ -143,7 +143,6 @@ export class UserService {
         skills: post.skills,
         organization_id: post.organization.id,
         organization_name: post.organization.name,
-        status:post.status
       }));
   }
   //applying for job
