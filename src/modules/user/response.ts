@@ -112,16 +112,16 @@ export class UserDetailsResponse{
   @Field() 
   phone?: string;
 
-  @Field() 
+  @Field({nullable:true}) 
   age?: string;
 
-  @Field()
+  @Field({nullable:true})
   experience?: string;
 
-  @Field()
+  @Field({nullable:true})
   skills?:string
 
-  @Field()
+  @Field({nullable:true})
   description?:string
 
   @Field({ nullable: true })

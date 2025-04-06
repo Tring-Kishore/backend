@@ -1,4 +1,4 @@
-import { getRepository } from "typeorm";
+import { getRepository, IsNull } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
 import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
@@ -42,9 +42,9 @@ export class UserService {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const userId = uuidv4();
+      const id = uuidv4();
 
-      const savedUser = await this.userRepository.save( {id:userId,
+      const savedUser = await this.userRepository.save( {id:id,
         name : name,
         email : normalizedEmail,
         phone : phone,
@@ -53,15 +53,16 @@ export class UserService {
 
       console.log('the saved user ',savedUser);
       
-      await this.userDetailsRepository.save({
+      const userdetails = await this.userDetailsRepository.save({
         id: uuidv4(),
-        userId: savedUser.id,
+        user: {id:id},
         age: 18,
         experience : "",
         skills: "",
         description:"",
       })
-
+      console.log('the userdetails ',userdetails);
+      
       console.log("User created successfully:", savedUser);
       return savedUser;
     } catch (error) {
@@ -76,11 +77,8 @@ export class UserService {
       console.log('the service in the login',input);
       
       const normalizedEmail = email.toLowerCase();
-      
-      const [user] = await this.userRepository.query(
-        `SELECT id, name, email, password, role FROM users WHERE email = $1 AND deleted_at IS NULL`, 
-        [normalizedEmail]
-      );
+
+      const user = await this.userRepository.findOne({where:{email:normalizedEmail,deleted_at:IsNull()},select:['id','name','email','password','role']});
   
       if (!user) {
         throw new Error('User Not found');
@@ -92,7 +90,7 @@ export class UserService {
       }
       let updatePasswordState = false
       if (user.role === 'organization') {
-        const [organization] = await this.orgRepository.query(
+         const [organization] = await this.orgRepository.query(
           `SELECT update_password_state FROM organizations WHERE organization_id = $1 AND deleted_at IS NULL`,
           [user.id]
         );
@@ -128,20 +126,29 @@ export class UserService {
   }
   async allJobPosts():Promise<JobPostResponse[]>
   {
-    const posts = await this.jobPostRepository.query(`
-      SELECT j.id , j.job_title , j.category , j.openings , j.experience , j.description , j.package , j.language , j.skills ,j.organization_id, u.name AS organization_name 
-           FROM jobposts j
-           JOIN users u ON j.organization_id = u.id 
-           WHERE j.deleted_at IS NULL
-      `);
+    const posts  = await this.jobPostRepository.find({
+      where: { deleted_at: IsNull() },
+      relations: ['organization'],});
       console.log('the post are',posts);
       
-      return posts;
+      return posts.map(post => ({
+        id: post.id,
+        job_title: post.job_title,
+        category: post.category,
+        openings: post.openings,
+        experience: post.experience,
+        description: post.description,
+        package: post.package,
+        language: post.language,
+        skills: post.skills,
+        organization_id: post.organization.id,
+        organization_name: post.organization.name,
+      }));
   }
   //applying for job
   async applyForJob(input: JobApplyInput): Promise<JobApplyResponse> {
     try {
-        
+
         const [existingApplication] = await this.jobAppliedRepository.query(
             `SELECT * FROM jobapplied 
              WHERE jobpost_id = $1 AND user_id = $2 AND deleted_at IS NULL`,
@@ -152,7 +159,7 @@ export class UserService {
             throw new Error('You have already applied for this job');
         }
 
-        
+     
         const [checking] = await this.userDetailsRepository.query(`
             SELECT age, experience, skills, description FROM userdetails WHERE user_id = $1
         `, [input.user_id]);
@@ -163,14 +170,18 @@ export class UserService {
             throw new Error('Please complete your profile before applying for a job');
         }
 
+        console.log('it is working untill us details ',checking);
+        
         const id = uuidv4();
+        
         const [result] = await this.jobAppliedRepository.query(
             `INSERT INTO jobapplied (
                 id, jobpost_id, user_id, organization_id, status
             ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
             [id, input.jobpost_id, input.user_id, input.organization_id, 'applied']
         );
-
+        console.log('the job applied ',result);
+        
         return result;
 
     } catch (error: any) {
@@ -197,16 +208,16 @@ export class UserService {
        WHERE ja.user_id = $1 AND ja.deleted_at IS NULL`,
       [input.id]
     );
+    console.log('the user applied job',result);
     return result;
   }
   async countUserApplications(input:UserIdInput):Promise<Number>
   {
-    const result = await this.userRepository.query(
-      `SELECT COUNT(id) FROM jobapplied WHERE user_id = $1 AND deleted_at IS NULL`,
-      [input.id]
-    );
-    const count = parseInt(result[0].count);
-    return count;
+    const result : any = await this.jobAppliedRepository.count({where:{
+      user:{id:input.id},deleted_at:IsNull()
+    }});
+    console.log('the result',result);
+    return result;
   }
   async user(input:UserIdInput):Promise<UserDetailsResponse>
   {
@@ -221,48 +232,36 @@ WHERE u.id = $1
   }
   async updateUser(input:UpdateUserInput):Promise<UserDetailsResponse>
   {
-    await this.userRepository.query(
-      `UPDATE users
-       SET name = $1, email = $2, phone = $3, updated_at = NOW()
-       WHERE id = $4`,
-      [input.name, input.email, input.phone, input.id]
-    );
+    
+    await this.userRepository.update({id:input.id},{name:input.name,email:input.email,phone:input.phone,updated_at:new Date()})
 
-    await this.userDetailsRepository.query(
-      `UPDATE userdetails
-       SET age = $1, experience = $2, skills = $3, description = $4, updated_at = NOW()
-       WHERE user_id = $5`,
-      [input.age, input.experience, input.skills, input.description, input.id]
-    );
+    await this.userDetailsRepository.update({user:{id:input.id}},{age:Number(input.age),experience:input.experience,skills:input.skills,description:input.description,updated_at:new Date()})
 
-    const result = await this.userRepository.query(`
-      SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description  FROM users u
-INNER JOIN userdetails ud ON u.id = ud.user_id
-WHERE u.id = $1
-      `,[input.id]);
-      console.log('the user details ',result[0]);
-      
-    return result[0];
+    const result : any = await this.userRepository.findOne({where:{id:input.id},relations:['details']});
+    return {
+      id: result?.id,
+      name : result?.name,
+      email:result?.email,
+      phone:result?.phone,
+      age: result?.details?.age,
+      experience: result?.details?.experience,
+      skills : result?.details?.skills,
+      description:result?.details?.description,
+    }
+    
 
   }
   //withdraw application 
   async withdrawApplication(input:WithdrawApplicationInput):Promise<WithdrawApplicationResponse>
   {
-    await this.jobAppliedRepository.query(`
-      UPDATE jobapplied SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL 
-      `,[input.id])
-
-    const withdraw = await this.jobAppliedRepository.query(`
-      SELECT id FROM jobapplied WHERE id = $1
-      `,[input.id]);
-
-    return withdraw[0];
+    const result = await this.jobAppliedRepository.update({id:input.id,deleted_at:IsNull()},{deleted_at:new Date()});
+    return {
+      id: input.id
+    };
   }
   async uploadResume(input:UploadResumeInput):Promise<UploadResumeResponse>
   {
-    await this.userDetailsRepository.query(
-      `UPDATE userdetails SET resume = $1 WHERE user_id = $2 AND deleted_at IS NULL`,[input.resumeKey,input.id]
-    )
+    await this.userDetailsRepository.update({user:{id:input.id},deleted_at:IsNull()},{resume:input.resumeKey});
     console.log('the resume updated successfully',input.resumeKey);
     
     return {

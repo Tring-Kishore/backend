@@ -43,12 +43,11 @@ export class Organization {
   update_password_state!: boolean;
 
   
-  @OneToOne(() => User, user => user.organizations)
+  @OneToOne(() => User)
   @JoinColumn({ name: "organization_id" })
-  @Field(() => User)
-  user!: User;
+  user?: User;
 
-  @OneToMany(() => JobPost, jobPost => jobPost.organizationId)
+  @OneToMany(() => JobPost, jobPost => jobPost.organization)
   @Field(() => [JobPost], { nullable: true })
   jobPosts?: JobPost[];
 }
