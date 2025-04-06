@@ -42,6 +42,10 @@ export class JobPost {
   @Field()
   skills!: string;
 
+  @Column()
+  @Field()
+  status!:string;
+
   @CreateDateColumn({ name: "created_at" })
   @Field()
   created_at!: Date;
@@ -54,11 +58,11 @@ export class JobPost {
   @Field({ nullable: true })
   deleted_at?: Date;
 
-  // Relations
+  
   @ManyToOne(() => User, user => user.jobPosts)
   @JoinColumn({ name: "organization_id" })
   @Field(() => User)
-  organizationId!: string;
+  organization!: User;
 
   @OneToMany(() => JobApplied, application => application.jobPost)
   @Field(() => [JobApplied], { nullable: true })

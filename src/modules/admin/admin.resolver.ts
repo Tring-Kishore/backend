@@ -16,12 +16,12 @@ export class AdminResolver{
     async getAllOrganizations(): Promise<AllApprovedOrganization[]>{
         return this.adminService.getAllOrganizations();
     }
-    @Query(() => [AllRequestedOrganization],{
-        description:"Getting all Requested ORganization"
-    })
-    async getRequestedCompanies(): Promise<AllRequestedOrganization[]>{
-        return this.adminService.getRequestedCompanies();
-    }
+    // @Query(() => [AllRequestedOrganization],{
+    //     description:"Getting all Requested ORganization"
+    // })
+    // async getRequestedCompanies(): Promise<AllRequestedOrganization[]>{
+    //     return this.adminService.getRequestedCompanies();
+    // }
     @Query(() => [GetAllUser],{
         description:"Getting all users"
     })

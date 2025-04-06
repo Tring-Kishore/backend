@@ -53,15 +53,14 @@ export class User {
   @Field({ nullable: true })
   deleted_at?: Date;
 
-  @OneToOne(() => UserDetails, details => details.userId)
+  @OneToOne(() => UserDetails, details => details.user)
   @Field(() => UserDetails, { nullable: true })
-  details?: string;
+  details?: UserDetails;
 
   @OneToOne(() => Organization, organization => organization.user)
-  @Field(() => [Organization], { nullable: true })
-  organizations?: Organization;
+  organization?: Organization;
 
-  @OneToMany(() => JobPost, jobPost => jobPost.organizationId)
+  @OneToMany(() => JobPost, jobPost => jobPost.organization)
   @Field(() => [JobPost], { nullable: true })
   jobPosts?: JobPost[];
 
