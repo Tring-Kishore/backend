@@ -146,3 +146,12 @@ export class UpdateOrganizationStatusResponse{
     @Field()
     status!:string
 }
+@ObjectType()
+export class UpdateJobPostStatusResponse {
+    @Field()
+    id!: string;
+
+    @Field()
+    status!: string;
+  }
+  

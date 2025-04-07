@@ -1,4 +1,4 @@
-import { getRepository, IsNull } from "typeorm";
+import { Any, getRepository, IsNull } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
 import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
@@ -112,7 +112,7 @@ export class UserService {
           update_password_state: updatePasswordState
         },
         process.env.JWT_SECRET,
-        {expiresIn: '1h'}
+        {expiresIn: '1hr'}
       );
       console.log('the token datas ',user.id, " ",user.name , " ",user.role, " ",updatePasswordState);
       
@@ -126,12 +126,12 @@ export class UserService {
   }
   async allJobPosts():Promise<JobPostResponse[]>
   {
-    const posts  = await this.jobPostRepository.find({
+    const posts : any  = await this.jobPostRepository.find({
       where: { deleted_at: IsNull() },
       relations: ['organization'],});
       console.log('the post are',posts);
       
-      return posts.map(post => ({
+      return posts.map((post:any) => ({
         id: post.id,
         job_title: post.job_title,
         category: post.category,
@@ -143,12 +143,12 @@ export class UserService {
         skills: post.skills,
         organization_id: post.organization.id,
         organization_name: post.organization.name,
+        status: post.status,
       }));
   }
   //applying for job
   async applyForJob(input: JobApplyInput): Promise<JobApplyResponse> {
     try {
-
         const [existingApplication] = await this.jobAppliedRepository.query(
             `SELECT * FROM jobapplied 
              WHERE jobpost_id = $1 AND user_id = $2 AND deleted_at IS NULL`,
@@ -193,8 +193,9 @@ export class UserService {
     }
 }
   //getting user applie jobs
-  async getUserJobApplied(input:JobAppliedByUserInput):Promise<JobAppliedByUserResponse[]>
+  async getUserJobApplied(context : any):Promise<JobAppliedByUserResponse[]>
   {
+    const userId = context.id;
     const result = await this.jobAppliedRepository.query(
       `SELECT 
         ja.id, ja.jobpost_id, ja.organization_id, ja.user_id, ja.status,ja.created_at, ja.updated_at,
@@ -206,26 +207,28 @@ export class UserService {
        JOIN jobposts jp ON ja.jobpost_id = jp.id
        JOIN users org ON ja.organization_id = org.id
        WHERE ja.user_id = $1 AND ja.deleted_at IS NULL`,
-      [input.id]
+      [userId]
     );
     console.log('the user applied job',result);
     return result;
   }
-  async countUserApplications(input:UserIdInput):Promise<Number>
+  async countUserApplications(context : any):Promise<Number>
   {
+    const userId = context.id;
     const result : any = await this.jobAppliedRepository.count({where:{
-      user:{id:input.id},deleted_at:IsNull()
+      user:{id:userId},deleted_at:IsNull()
     }});
     console.log('the result',result);
     return result;
   }
-  async user(input:UserIdInput):Promise<UserDetailsResponse>
+  async user(context : any):Promise<UserDetailsResponse>
   {
+    const userId = context.id;
     const result = await this.userRepository.query(`
       SELECT u.id , u.name ,u.email , u.phone , ud.age , ud.experience , ud.skills , ud.description, ud.resume AS "resumeKey" FROM users u
 INNER JOIN userdetails ud ON u.id = ud.user_id
 WHERE u.id = $1
-      `,[input.id]);
+      `,[userId]);
       console.log('the user details ',result[0]);
       
     return result[0];
@@ -252,11 +255,12 @@ WHERE u.id = $1
 
   }
   //withdraw application 
-  async withdrawApplication(input:WithdrawApplicationInput):Promise<WithdrawApplicationResponse>
+  async withdrawApplication(context : any):Promise<WithdrawApplicationResponse>
   {
-    const result = await this.jobAppliedRepository.update({id:input.id,deleted_at:IsNull()},{deleted_at:new Date()});
+    const userId = context.id;
+    const result = await this.jobAppliedRepository.update({id:userId,deleted_at:IsNull()},{deleted_at:new Date()});
     return {
-      id: input.id
+      id: userId
     };
   }
   async uploadResume(input:UploadResumeInput):Promise<UploadResumeResponse>

@@ -3,15 +3,15 @@ import { Organization } from "../organization/entity/organization.entity";
 import { Service } from "typedi";
 import {
   AllApprovedOrganization,
-  AllRequestedOrganization,
   DeleteOrganizationResponse,
   DeleteUserResponse,
   GetAllUser,
+  UpdateJobPostStatusResponse,
   UpdateOrganizationPasswordResponse,
   UpdateOrganizationStatusResponse,
 } from "./response";
 import { User } from "../user/entity/user.entity";
-import { DeleteOrganizationInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
+import { DeleteOrganizationInput, UpdateJobPostStatusInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput } from "./input";
 import * as bcrypt from "bcrypt";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { UserDetails } from "../user/entity/userDetails.entity";
@@ -19,7 +19,6 @@ import { JobApplied } from "../jobs/entity/jobApplied.entity";
 import { generatePassword } from '../../../utils/passwordGenerator';
 import { sendEmail } from "../../../utils/emailSender";
 import nodemailer from 'nodemailer';
-import { IsNull } from "typeorm";
 @Service()
 export class AdminService {
   constructor(
@@ -208,5 +207,16 @@ export class AdminService {
     const result = await this.jobpostRepository.count();
    
     return result;
+  }
+  async updateStatus(input: UpdateJobPostStatusInput,): Promise<UpdateJobPostStatusResponse> {
+    await this.jobpostRepository.update(input.id, { status: input.status });
+    
+    const updatedPost = await this.jobpostRepository.findOne({
+      where: { id: input.id },
+    });
+    return {
+      id: input.id,
+      status: input.status,
+    };
   }
 }

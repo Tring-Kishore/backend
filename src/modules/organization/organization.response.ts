@@ -64,6 +64,9 @@ export class GetAllJobPostByOrganizationResponse{
     @Field()
     organization_id!:string
 
+    @Field()
+    status!:string;
+
 }
 @ObjectType()
 export class UpdateJobPostResponse{
@@ -144,3 +147,4 @@ export class UpdatJobAppliedStatusResponse{
     @Field()
     status!:string
   }
+  

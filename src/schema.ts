@@ -12,3 +12,4 @@ export const createSchema = () =>
     resolvers:[UserResolver, OrganizationResolver,AdminResolver , S3Resolver],
     validate: false,
   });
+  

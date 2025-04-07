@@ -42,6 +42,10 @@ export class JobPost {
   @Field()
   skills!: string;
 
+  @Column()
+  @Field({nullable:true})
+  status?:string;
+
   @CreateDateColumn({ name: "created_at" })
   @Field()
   created_at!: Date;

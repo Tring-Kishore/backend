@@ -10,7 +10,7 @@ export class S3Resolver {
     @Arg("input") input: UploadPdfInput
   ): Promise<UploadPdfResponse> {
     const presignedUrl = await uploadPdf(
-      process.env.AWS_S3_BUCKET_NAME || "jobportal-media-resume",
+      process.env.AWS_S3_BUCKET_NAME as string,
       input.fileName
     );
     return {
@@ -23,7 +23,7 @@ export class S3Resolver {
   @Query(() => DownloadPdfResponse)
   async generateDownloadUrl(@Arg("input")input:DownloadPdfInput):Promise<DownloadPdfResponse>
   {
-    const downloadUrl = await downloadPdf(input.bucket,input.key)
+    const downloadUrl = await downloadPdf(process.env.AWS_S3_BUCKET_NAME as string ,input.key)
     return { 
         downloadUrl,
         expiresAt: new Date(Date.now() + 3600 * 1000)

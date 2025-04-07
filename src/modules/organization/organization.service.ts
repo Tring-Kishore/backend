@@ -110,6 +110,7 @@ export class OrganizationService {
       language: input.language,
       skills: input.skills,
       organization: {id:input.organization_id},
+      status:'pending',
     });
     return {
       ...result,
@@ -117,16 +118,17 @@ export class OrganizationService {
     };
   }
   async jobPosts(
-    input: GetAllJobPostByOrganizationInput
+    context : any
   ): Promise<GetAllJobPostByOrganizationResponse[]> {
+    const orgId = context.id;
     const posts = await this.jobPostRepository.find({
-      where: { organization: { id: input.id } },
+      where: { organization: { id: orgId } },
       relations: ["organization"],
     });
 
     console.log("the posts are ", posts);
 
-    return posts.map((post) => ({
+    return posts.map((post : any) => ({
       id: post.id,
       job_title: post.job_title,
       category: post.category,
@@ -137,6 +139,7 @@ export class OrganizationService {
       language: post.language,
       skills: post.skills,
       organization_id: post.organization.id,
+      status:post.status,
     }));
   }
   async updateJobPost(
@@ -172,8 +175,9 @@ export class OrganizationService {
     return updatePost as UpdateJobPostResponse;
   }
   async jobApplied(
-    input: GetJobAppliedApplicationsInput
+    context : any
   ): Promise<GetJobAppliedApplicationsResponse[]> {
+    const orgId = context.id;
     const result = await this.jobAppliedRepository.query(
       `SELECT 
         ja.id, ja.jobpost_id, ja.organization_id, ja.user_id, ja.status, ja.created_at, ja.updated_at,
@@ -186,7 +190,7 @@ export class OrganizationService {
        JOIN jobposts jp ON ja.jobpost_id = jp.id
        JOIN users org ON ja.organization_id = org.id
        WHERE ja.organization_id = $1 AND ja.deleted_at IS NULL`,
-      [input.id]
+      [orgId]
     );
     return result;
   }
@@ -217,14 +221,16 @@ export class OrganizationService {
 
     return { id: input.id, status: input.status };
   }
-  async countOrganizationJobPosts(input: OrganizationIdInput): Promise<Number> {
-    const result = await this.jobPostRepository.count({where:{organization:{id:input.id}}});
+  async countOrganizationJobPosts(context : any): Promise<Number> {
+    const orgId = context.id;
+    const result = await this.jobPostRepository.count({where:{organization:{id:orgId}}});
     return result;
   }
   async countOrganizationApplications(
-    input: OrganizationIdInput
+    context : any
   ): Promise<Number> {
-    const result = await this.jobAppliedRepository.count({where:{organization:{id:input.id}}});
+    const orgId = context.id;
+    const result = await this.jobAppliedRepository.count({where:{organization:{id:orgId}}});
     return result;
   }
 }

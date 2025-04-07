@@ -13,7 +13,5 @@ export class DownloadPdfInput{
     @Field()
     key!:string
 
-    @Field()
-    bucket!:string
     
 }
