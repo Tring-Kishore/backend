@@ -3,7 +3,6 @@ import { Organization } from "../organization/entity/organization.entity";
 import { Service } from "typedi";
 import {
   AllApprovedOrganization,
-  AllRequestedOrganization,
   DeleteOrganizationResponse,
   DeleteUserResponse,
   GetAllUser,
@@ -20,7 +19,6 @@ import { JobApplied } from "../jobs/entity/jobApplied.entity";
 import { generatePassword } from '../../../utils/passwordGenerator';
 import { sendEmail } from "../../../utils/emailSender";
 import nodemailer from 'nodemailer';
-import { IsNull } from "typeorm";
 @Service()
 export class AdminService {
   constructor(

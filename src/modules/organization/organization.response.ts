@@ -147,3 +147,4 @@ export class UpdatJobAppliedStatusResponse{
     @Field()
     status!:string
   }
+  

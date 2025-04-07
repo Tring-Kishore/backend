@@ -154,3 +154,4 @@ export class UpdateJobPostStatusResponse {
     @Field()
     status!: string;
   }
+  

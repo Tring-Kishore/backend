@@ -8,6 +8,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import { User } from './modules/user/entity/user.entity';
 import { IsNull } from 'typeorm';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 //import helmet from 'helmet';
 const app = express() as any;
 const port = 4000;
@@ -21,7 +22,7 @@ dataSource.initialize()
     await server.start();
     app.use(
       '/graphql',
-      cors(),
+      cors({credentials:true}),
       bodyParser.json(),
       expressMiddleware(server, {
         context: async ({ req }) => {
@@ -30,11 +31,24 @@ dataSource.initialize()
             return { user: null };
           }
           try {
-            const decoded: any = jwt.verify(token, "Eoin Kishore");
-            
-            return { user: decoded };
-          } catch (err) {
+            if(process.env.JWT_SECRET){
+              const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
+              const userRepository = dataSource.getRepository(User);
+              const user = await userRepository.findOne({ 
+              where: { id: decoded.userId, deleted_at: IsNull() } 
+            });
+            if (!user) {
+              console.log('user not found');
+              throw new Error("User not found");
+            }
+              console.log('the decoded value',decoded);
+              
+              return { user: decoded };
+            }
             return { user: null };
+          } catch (err : any) {
+            console.log('jwt',err);
+            throw new Error(err);
           }
         }
       })

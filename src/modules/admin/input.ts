@@ -32,3 +32,4 @@ export class UpdateJobPostStatusInput {
     @Field()
     status!:string;
   }
+  
