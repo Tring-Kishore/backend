@@ -1,19 +1,19 @@
-import { createSchema } from './schema';
-import dataSource from './database/data-source';
+import { createSchema } from './src/schema';
+import dataSource from './src/database/data-source';
 import express from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
-import { User } from './modules/user/entity/user.entity';
+import { User } from './src/modules/user/entity/user.entity';
 import { IsNull } from 'typeorm';
 import { GraphQLError } from 'graphql/error/GraphQLError';
-//import helmet from 'helmet';
+
 const app = express() as any;
 const port = 4000;
 
-//app.use(helmet());
+
 dataSource.initialize()
   .then(async () => {
     console.log("DB Connected");

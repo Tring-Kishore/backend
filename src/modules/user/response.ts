@@ -1,4 +1,4 @@
-import { ObjectType, Field,} from "type-graphql";
+import { ObjectType, Field, ID,} from "type-graphql";
 
 @ObjectType()
 export class LoginResponse {
@@ -161,4 +161,58 @@ export class UploadResumeResponse{
   @Field()
   resumeKey!:string
 }
+@ObjectType()
+export class UpdateJobPostStatusResponse {
+    @Field()
+    id!: string;
 
+    @Field()
+    status!: string;
+  }
+  @ObjectType()
+  export class DeleteUserResponse{
+      @Field(() => ID)
+      id!:string
+  
+      @Field()
+      name!:string
+  }
+  @ObjectType()
+export class GetAllUser{
+    @Field()
+    id!:string
+
+    @Field()
+    name!:string
+
+    @Field()
+    email!:string
+
+    @Field()
+    phone!:string
+
+    @Field()
+    role!: string;
+
+    // @Field({nullable:true})
+    // deleted_at?:Date
+}
+@ObjectType()
+export class UploadPdfResponse{
+    @Field()
+    presignedUrl!:string
+
+    @Field()
+    key!:string
+
+    @Field()
+    publicUrl!:string
+}
+@ObjectType()
+export class DownloadPdfResponse {
+  @Field()
+  downloadUrl!: string;
+  
+  @Field()
+  expiresAt!: Date;
+}

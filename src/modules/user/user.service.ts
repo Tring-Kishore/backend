@@ -1,7 +1,7 @@
 import { Any, getRepository, IsNull } from "typeorm";
 import { User, UserRole } from "./entity/user.entity";
 import { UserDetails } from "./entity/userDetails.entity";
-import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
+import { JobAppliedByUserInput, JobApplyInput, LoginInput, UpdateJobPostStatusInput, UpdateUserInput, UploadResumeInput, UserIdInput, UserInput, WithdrawApplicationInput } from "./input";
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { Service } from "typedi";
@@ -9,12 +9,12 @@ import dataSource from "../../database/data-source";
 import { OrganizationService } from "../../modules/organization/organization.service";
 import { Organization } from "../organization/entity/organization.entity";
 import * as jwt from "jsonwebtoken";
-import {  JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UploadResumeResponse, UserDetailsResponse, WithdrawApplicationResponse } from "./response";
-import { GetAllUser } from "modules/admin/response";
+import {  DeleteUserResponse, JobAppliedByUserResponse, JobApplyResponse, JobPostResponse, LoginResponse, UpdateJobPostStatusResponse, UploadResumeResponse, UserDetailsResponse, WithdrawApplicationResponse } from "./response";
+import { GetAllUser } from "../user/response";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
-import { UploadPdfInput } from "modules/s3/s3.input";
-import { UploadPdfResponse } from "modules/s3/s3.response";
+import { UploadPdfInput } from "../user/input";
+import { UploadPdfResponse } from "../user/response";
 @Service()
 export class UserService {
    constructor(
@@ -272,6 +272,58 @@ WHERE u.id = $1
       id:input.id,
       resumeKey:input.resumeKey
     }
+  }
+  async updateStatus(input: UpdateJobPostStatusInput,): Promise<UpdateJobPostStatusResponse> {
+    await this.jobPostRepository.update(input.id, { status: input.status });
+    
+    const updatedPost = await this.jobPostRepository.findOne({
+      where: { id: input.id },
+    });
+    return {
+      id: input.id,
+      status: input.status,
+    };
+  }
+  async countUsers():Promise<Number>
+  {
+  const result = await this.userRepository.count({where:{role:'user'}});
+  
+  return result;
+  }
+  async deleteUser(id: string): Promise<DeleteUserResponse> {
+    try {
+      const user = await this.userRepository.findOne({where:{id:id},select:['id','name']});
+  
+      if (!user) {
+        throw new Error('User not found or already deleted');
+      }
+      await this.userRepository.query('BEGIN');
+  
+      try {
+        await this.userRepository.update({id:id},{deleted_at:new Date()});
+        await this.userDetailsRepository.update({user:{id:id}},{deleted_at:new Date()});
+       
+        await this.jobAppliedRepository.update({user:{id:id}},{deleted_at:new Date()});
+       
+        await this.userRepository.query('COMMIT');
+  
+        return { id: user.id, name: user.name };
+  
+      } catch (error) {
+        await this.userRepository.query('ROLLBACK');
+        throw new Error('Failed to delete user');
+      }
+  
+    } catch (error: any) {
+      if (error.message === 'User not found or already deleted') {
+        throw error;
+      }
+      throw new Error('Failed to delete user');
+    }
+  }
+  async users(): Promise<GetAllUser[]> {
+    const user = await this.userRepository.find({where:{role:'user'}});
+    return user;
   }
   
 }

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon ./src/server.ts",
+    "dev": "nodemon server.ts",
     "build": "tsc",
     "start": "npm run build && ts-node ./dist/server.js",
-    "start:local": "cross-env NODE_ENV=dev npm run db:migrate && cross-env NODE_ENV=dev ts-node ./src/server.ts --watch",
+    "start:local": "cross-env NODE_ENV=dev npm run db:migrate && cross-env NODE_ENV=dev ts-node ./server.ts --watch",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --d ./src/database/data-source.ts",
     "typeorm-test": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --d ./src/test-database/testdbconfig.ts",
     "typeorm-without-dataSource": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",

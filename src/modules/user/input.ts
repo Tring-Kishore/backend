@@ -87,6 +87,25 @@ export class UploadResumeInput{
   @Field()
   resumeKey!:string
 }
+@InputType()
+export class UpdateJobPostStatusInput {
+    @Field()
+    id!: string;
 
-
+    @Field()
+    status!:string;
+  }
+  @InputType()
+  export class UploadPdfInput{
+      @Field()
+      fileName!:string
+  
+      @Field()
+      fileType!:string
+  }
+  @InputType()
+  export class DownloadPdfInput{
+      @Field()
+      key!:string
+  }
 

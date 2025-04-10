@@ -1,10 +1,10 @@
 import { Arg, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Organization } from "./entity/organization.entity";
 import { OrganizationService } from "./organization.service";
-import { AddJobPostInput, GetAllJobPostByOrganizationInput, GetJobAppliedApplicationsInput, OrganizationIdInput, OrganizationInput, UpdateJobPostInput, UpdatJobAppliedStatusInput } from "./input";
+import { AddJobPostInput, DeleteOrganizationInput, GetAllJobPostByOrganizationInput, GetJobAppliedApplicationsInput, OrganizationIdInput, OrganizationInput, UpdateJobPostInput, UpdateOrganizationPasswordInput, UpdateOrganizationStatusInput, UpdatJobAppliedStatusInput } from "./input";
 import { UserInput } from "../user/input";
 import { Service } from "typedi";
-import { AddJobPostResponse, GetAllJobPostByOrganizationResponse, GetJobAppliedApplicationsResponse, UpdateJobPostResponse, UpdatJobAppliedStatusResponse } from "./organization.response";
+import { AddJobPostResponse, AllApprovedOrganization, DeleteOrganizationResponse, GetAllJobPostByOrganizationResponse, GetJobAppliedApplicationsResponse, UpdateJobPostResponse, UpdateOrganizationPasswordResponse, UpdateOrganizationStatusResponse, UpdatJobAppliedStatusResponse } from "./organization.response";
 
 @Resolver()
 @Service()
@@ -69,6 +69,35 @@ export class OrganizationResolver {
   async countOrganizationApplications(@Arg("input")input:OrganizationIdInput):Promise<Number>
   {
     return this.organizationService.countOrganizationApplications(input);
+  }
+  @Mutation(() => UpdateOrganizationStatusResponse)
+  async updateOrganizationStatus(@Arg("input") input:UpdateOrganizationStatusInput):Promise<UpdateOrganizationStatusResponse>
+  {
+      return this.organizationService.updateOrganizationStatus(input);
+  }
+  @Query(() => Number)
+  async countJobPosts():Promise<Number>
+  {
+      return this.organizationService.countJobPosts();
+  }
+  @Query(() => Number)
+  async countOrganizations():Promise<Number>
+  {
+      return this.organizationService.countOrganizations();
+  }
+  @Mutation(() => UpdateOrganizationPasswordResponse)
+  async updateOrganizationPassword(@Arg("input") input:UpdateOrganizationPasswordInput):Promise<UpdateOrganizationPasswordResponse>
+  {
+      return this.organizationService.updateOrganizationPassword(input);
+  }
+  @Mutation(() => DeleteOrganizationResponse)
+  async deleteOrganization(@Arg("input")input: DeleteOrganizationInput):Promise<DeleteOrganizationResponse>
+  {
+      return this.organizationService.deleteOrganization(input);
+  }
+  @Query(() => [AllApprovedOrganization])
+  async getAllOrganizations(): Promise<AllApprovedOrganization[]>{
+    return this.organizationService.getAllOrganizations();
   }
   
 }
