@@ -2,11 +2,14 @@ import { Organization } from "./entity/organization.entity";
 import { User, UserRole } from "../user/entity/user.entity";
 import {
   AddJobPostInput,
+  DeleteOrganizationInput,
   GetAllJobPostByOrganizationInput,
   GetJobAppliedApplicationsInput,
   OrganizationIdInput,
   OrganizationInput,
   UpdateJobPostInput,
+  UpdateOrganizationPasswordInput,
+  UpdateOrganizationStatusInput,
   UpdatJobAppliedStatusInput,
 } from "./input";
 import { UserInput } from "../user/input";
@@ -16,15 +19,19 @@ import dataSource from "../../database/data-source";
 import { Service } from "typedi";
 import {
   AddJobPostResponse,
+  AllApprovedOrganization,
+  DeleteOrganizationResponse,
   GetAllJobPostByOrganizationResponse,
   GetJobAppliedApplicationsResponse,
   UpdateJobPostResponse,
+  UpdateOrganizationPasswordResponse,
+  UpdateOrganizationStatusResponse,
   UpdatJobAppliedStatusResponse,
 } from "./organization.response";
 import { JobPost } from "../jobs/entity/jobPost.entity";
 import { JobApplied } from "../jobs/entity/jobApplied.entity";
-import { generatePassword } from "../../../utils/passwordGenerator";
-import { sendEmail } from "../../../utils/emailSender";
+import { generatePassword } from "../../../utils/passwordgenerator";
+import { sendEmail } from "../../../utils/emailsender";
 
 @Service()
 export class OrganizationService {
@@ -233,4 +240,123 @@ export class OrganizationService {
     const result = await this.jobAppliedRepository.count({where:{organization:{id:orgId}}});
     return result;
   }
+  async updateOrganizationStatus(input : UpdateOrganizationStatusInput):Promise<UpdateOrganizationStatusResponse>
+  {
+    
+    const result : any = await this.orgRepository.findOne({where:{id:input.id},relations:['user']});
+    
+    await this.orgRepository.update({id:input.id},{status:input.status});
+   
+        if (input.status === 'approved' || input.status === 'rejected') {
+          let emailSubject = `Application Status Updated: ${input.status}`;
+          let emailText = '';
+    
+          if (input.status === 'approved') {
+            const defaultPassword = generatePassword();
+            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    
+            await this.userRepository.update({id:result?.user?.id},{password:hashedPassword});
+           
+    
+            emailText = `Your organization has been approved. 
+            The default password is ${defaultPassword}. After logging in, you can change the password.`;
+          } else if (input.status === 'rejected') {
+            emailText = `Your application has been rejected.`;
+          }
+    
+          await sendEmail({
+            from: process.env.EMAIL,
+            to: result?.user?.email,
+            subject: emailSubject,
+            text: emailText,
+          });
+        }
+    return {id:input.id , status:input.status};
+  }
+  async countJobPosts():Promise<Number>
+  {
+    const result = await this.jobPostRepository.count();
+   
+    return result;
+  }
+  async countOrganizations():Promise<Number>
+  {
+    const result = await this.userRepository.count({where:{role:'organization'}});
+   
+
+    return result;
+  }
+  async updateOrganizationPassword(input: UpdateOrganizationPasswordInput): Promise<UpdateOrganizationPasswordResponse> {
+    
+    const newpassword : any = await this.userRepository.findOne({where:{id:input.id},select:['password']});
+  
+    console.log('the old password is ',newpassword.password);
+    const isOldPassword = await bcrypt.compare(input.oldPassword,newpassword.password);
+    if(!isOldPassword)
+    {
+      throw new Error('Current password is incorrect');
+    }
+    const hashedPassword = await bcrypt.hash(input.newPassword, 10);
+    
+    await this.userRepository.update({id:input.id},{password:hashedPassword})
+    await this.orgRepository.update({user:{id:input.id}},{update_password_state:true});
+    
+
+    console.log("the password is ", input.newPassword);
+
+    return {
+      update_password_state: true,
+    };
+  }
+  async deleteOrganization(input:DeleteOrganizationInput): Promise<DeleteOrganizationResponse> {
+    
+    const [organization] = await this.orgRepository.query(
+        `SELECT organization_id FROM organizations WHERE id = $1 AND deleted_at IS NULL`,[input.id]
+    );
+    await this.orgRepository.update({id:input.id},{deleted_at:new Date()});
+    
+    await this.userRepository.update({id:organization.organization_id},{deleted_at:new Date()});
+    
+    await this.jobPostRepository.query(
+      `UPDATE jobposts SET deleted_at = NOW() WHERE organization_id = $1 AND deleted_at IS NULL`,[organization.organization_id]
+    );
+    await this.jobAppliedRepository.query(
+      `UPDATE jobapplied SET deleted_at = NOW() WHERE organization_id = $1 AND deleted_at IS NULL`,[organization.organization_id]
+    );
+
+    return {id:input.id};
+  }
+  async getAllOrganizations(): Promise<AllApprovedOrganization[]> {
+    // const organizations = await this.orgRepository.find({where:{user:{role:'organization'}},relations:['user']})
+    const organizations = await this.orgRepository.query(`
+            SELECT o.id, o.website, o.description, o.status, o.location, o.created_at, o.updated_at, o.deleted_at, o.organization_id, o.update_password_state,u.id AS "user_id", u.name AS "user_name", u.email AS "user_email", u.phone AS "user_phone",u.role AS "user_role"
+            FROM users u
+            INNER JOIN organizations o ON u.id = o.organization_id
+            WHERE u.role = 'organization' AND u.deleted_at IS NULL
+            
+        `);
+
+    return organizations.map(
+      (org: any ) => ({
+        id: org.id,
+        website: org.website,
+        description: org.description,
+        status: org.status,
+        location: org.location,
+        created_at: org.created_at,
+        updated_at: org.updated_at,
+        deleted_at: org.deleted_at,
+        organization_id: org.organization_id,
+        update_password_state: org.update_password_state,
+        user: {
+          id: org.user_id,
+          name: org.user_name,
+          email: org.user_email,
+          phone: org.user_phone,
+          role: org.user_role,
+        },
+      })
+    );
+  }
+
 }
